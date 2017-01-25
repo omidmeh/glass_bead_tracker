@@ -137,3 +137,6 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+.idea/modules.xml
+.idea/workspace.xml
+.idea/newcode.iml
