@@ -6,3 +6,5 @@ from os import chdir
 chdir(r'C:\Users\omidm\OneDrive\Uni\_HONERS PROJ\pyCode')
 VIDEO_PATH = "..\\Videos\\Cut.mp4"
 
+
+h
