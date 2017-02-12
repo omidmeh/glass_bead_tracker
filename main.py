@@ -1,7 +1,6 @@
 import numpy as np
 import cv2
 from os import chdir
-from Blob import Blob
 import convenience as con
 from tracker import Tracker
 
@@ -43,7 +42,11 @@ fgbg = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=50, detectSh
 detector = cv2.SimpleBlobDetector_create(params)
 kernel = np.ones((5, 5), np.uint8)
 
-tracker = Tracker(500, True, 50)
+tracker = Tracker(line_pos=500,
+                  track_vertically=True,
+                  min_size=50,
+                  threshold=35,
+                  remove_if_missing_for=10)
 
 
 def contour_center(cnt):
@@ -60,13 +63,17 @@ def draw_bounding_box(c, frame):
     cv2.circle(frame, contour_center(c), radius=0, thickness=5, color=(0, 255, 0))
 
 
-try:     cap.release(); print "Released Camera"
-except:  print "Camera was free"
+try:
+    cap.release()
+    print("Released Camera")
+except:
+    print ("Camera was free")
 
 
 # Load Video
 cap = cv2.VideoCapture(VIDEO_PATH)
-
+frame_counter = 0
+blob_count = 0
 xx = 1
 while True:
     ret, frame = cap.read()
@@ -77,6 +84,7 @@ while True:
         continue
     else: xx = 0
 
+    frame_counter += 1
     frame = con.resize(frame, width=750)
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -97,14 +105,22 @@ while True:
     im_with_keypoints = cv2.drawKeypoints(frame, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
     # Draw a diagonal blue line with thickness of 5 px
-    cv2.line(im_with_keypoints, (200, 300), (300, 300), (150, 150, 255), 2)
-    cv2.putText(frame, str(len(keypoints)), (175, 300), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255))
-    cv2.putText(im_with_keypoints, "keypts %d" % len(keypoints), (600, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255))
+    cv2.putText(frame, str(len(keypoints)), (175, 300), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.75, (255, 255, 255))
+    cv2.putText(im_with_keypoints, "Frame %d" % frame_counter, (600, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.75, (255, 255, 255))
+    cv2.putText(im_with_keypoints, "keypts %d" % len(keypoints), (600, 40), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.75, (255, 255, 255))
 
     tracker.process_keypoints(keypoints)
-    tracker.draw_current_keypoints(im_with_keypoints)
-    cv2.putText(im_with_keypoints, "Count: %s" % tracker._crossed, (50, 300), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255))
-    cv2.putText(im_with_keypoints, "Live %s" % len(tracker._blobs), (600, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255))
+    tracker.draw_live_ids(im_with_keypoints)
+    tracker.draw_predictions(im_with_keypoints)
+
+    if blob_count != tracker.counted_blobs:
+        cv2.line(im_with_keypoints, (200, 300), (300, 300), (150, 255, 255), 2)
+        blob_count = tracker.counted_blobs
+    else:
+        cv2.line(im_with_keypoints, (200, 300), (300, 300), (150, 150, 255), 2)
+
+    cv2.putText(im_with_keypoints, "Count: %s" % tracker.counted_blobs, (120, 295), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.75, (255, 255, 255))
+    cv2.putText(im_with_keypoints, "Live %s" % tracker.live_blobs, (600, 60), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.75, (255, 255, 255))
 
     # Display results
     # cv2.imshow('gray', gray)

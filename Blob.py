@@ -8,11 +8,12 @@ class Blob:
     _missing_frame_count = None    # type: int
     _history_length = None         # type: int
 
-    def __init__(self, history=3):
+    def __init__(self, history=3, ID=0):
         """ Initializes the blob object.
 
         :param history: number of old positions to keep for calculating object's velocity (default 3)
         """
+        self._ID = ID
         self._last_xy_points = list()
         self._missing_frame_count = 0
         self._history_length = history
@@ -34,7 +35,7 @@ class Blob:
     def print_positions(self):
         """ Prints the last registered coordinates of the blob (up to _history_length many of them.)"""
 
-        print ("Positions for blob ID %03d: ", self._ID)
+        print ("Positions for blob id %03d: ", self._ID)
         for pos in self._last_xy_points:
             print ("%s " % (pos,)),
         print("")   # New line
@@ -58,8 +59,8 @@ class Blob:
         pt1 = self._last_xy_points[0]
         pt2 = self._last_xy_points[-1]
 
-        dx = (pt2[0]*1.0 - pt1[0]) / (len(self._last_xy_points)-1)
-        dy = (pt2[1]*1.0 - pt1[1]) / (len(self._last_xy_points)-1)
+        dx = (pt2[0]*1.0 - pt1[0]) / (len(self._last_xy_points) - 1)
+        dy = (pt2[1]*1.0 - pt1[1]) / (len(self._last_xy_points) - 1)
 
         x2 = pt2[0] + (dx * (1 + self._missing_frame_count))
         y2 = pt2[1] + (dy * (1 + self._missing_frame_count))
@@ -94,3 +95,12 @@ class Blob:
         m2 = self._last_xy_points[-2][0] - line_x_position
 
         return (m1 * m2) < 0
+
+    @property
+    def id(self):
+        return self._ID
+
+    @property
+    def last_known_coordinate(self):
+        assert len(self._last_xy_points[-1]) > 0
+        return self._last_xy_points[-1]
