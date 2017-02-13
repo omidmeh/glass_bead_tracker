@@ -15,6 +15,7 @@ class Tracker:
     _min_blob_size = 0              # type: int
     _blob_distance_threshold = 0    # type: int
     _remove_if_missing_for = 0      # type: int
+    _debug_print = None             # type: bool
 
     def __init__(self, line_pos, track_vertically=True, min_size=50, threshold=25, remove_if_missing_for=10):
         # Initialization
@@ -26,6 +27,10 @@ class Tracker:
         self._min_blob_size = min_size
         self._blob_distance_threshold = threshold
         self._remove_if_missing_for = remove_if_missing_for
+        self._debug_print = False
+
+    def set_debug_print(self, debug_print_bool):
+        self._debug_print = debug_print_bool
 
     def _new_blob(self):
         self._last_used_ID += 1
@@ -54,25 +59,29 @@ class Tracker:
                     b = self._new_blob()
                     b.register_new_loc(np.array(kp.pt))
                     self._blobs.append(b)
-                    print("Added blob*")
+                    if self._debug_print:
+                        print("Added blob*")
 
                 else:
                     mm = min(unmatched_registered_blobs, key=unmatched_registered_blobs.get)
 
-                    print("dist: {:6.2f} | new: {} | predict: {}".format(unmatched_registered_blobs[mm],
-                                                                         np.around(np.array(kp.pt), 2),
-                                                                         np.around(mm.predict_next_coordinate(), 2))),
+                    if self._debug_print:
+                        print("dist: {:6.2f} | new: {} | predict: {}".format(unmatched_registered_blobs[mm],
+                                                                             np.around(np.array(kp.pt), 2),
+                                                                             np.around(mm.predict_next_coordinate(), 2))),
                     if unmatched_registered_blobs[mm] < self._blob_distance_threshold:
                         mm.register_new_loc(np.array(kp.pt))
                         unmatched_registered_blobs.pop(mm, 0)
                         if mm.crossed_h_line(300):
                             self._counted_blobs += 1
-                        print("Matched blob %d" % mm.id)
+                        if self._debug_print:
+                            print("Matched blob %d" % mm.id)
                     else:
                         b = self._new_blob()
                         b.register_new_loc(np.array(kp.pt))
                         self._blobs.append(b)
-                        print("Added blob")
+                        if self._debug_print:
+                            print("Added blob")
 
             for unmatched in unmatched_registered_blobs:
                 unmatched.mark_missing_in_this_frame()
